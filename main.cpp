@@ -156,6 +156,30 @@ void processInput(GLFWwindow *window) {
     cameraFront = glm::normalize(front);
 }
 
+
+// Fungsi ini akan otomatis dipanggil setiap kali jendela desktop diubah ukurannya
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+    // 1. Atur ulang ukuran Viewport (kanvas tempat OpenGL menggambar)
+    glViewport(0, 0, width, height);
+
+    // 2. Atur ulang Proyeksi Kamera agar objek tidak gepeng/distorsi
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    // Hitung ulang Aspect Ratio yang baru (Lebar / Tinggi)
+    float aspectRatio = (height == 0) ? 1.0f : (float)width / (float)height;
+
+    // Masukkan kembali FOV kamera Anda (misal 65.0f yang kita pakai kemarin)
+    // Jika Anda memakai GLM:
+    glm::mat4 projection = glm::perspective(glm::radians(65.0f), aspectRatio, 0.1f, 100.0f);
+    glLoadMatrixf(&projection[0][0]);
+
+    // Kembalikan ke mode ModelView untuk menggambar objek
+    glMatrixMode(GL_MODELVIEW);
+}
+
+
+
 // =========================================================================
 // INTIPROGRAM UTAMA DAN RENDER ENGINE LOOP
 // =========================================================================
@@ -169,6 +193,12 @@ int main() {
         return -1;
     }
     glfwMakeContextCurrent(window);
+
+    if (window == NULL) {
+    // ... kode penanganan error window ...
+}
+
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // --- TAMBAHKAN BARIS INI DI SINI ---
     // Mengatur warna latar belakang (langit). Formatnya (Red, Green, Blue, Alpha) dari 0.0f sampai 1.0f.
