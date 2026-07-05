@@ -1,177 +1,267 @@
-/*
- * GLUT Shapes Demo
- *
- * Written by Nigel Stewart November 2003
- *
- * This program is test harness for the sphere, cone
- * and torus shapes in GLUT.
- *
- * Spinning wireframe and smooth shaded shapes are
- * displayed until the ESC or q key is pressed.  The
- * number of geometry stacks and slices can be adjusted
- * using the + and - keys.
- */
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
-#ifdef __APPLE__
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+// =========================================================================
+// VARIABLE KONTROL KAMERA (SKALA NORMAL, STABIL & HALUS)
+// =========================================================================
 
-#include <stdlib.h>
+// Posisi spawn awal (Berdiri di tengah jalan raya, agak mundur agar denah langsung terlihat)
+glm::vec3 cameraPos   = glm::vec3(0.0f, 2.0f, 40.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 
-static int slices = 16;
-static int stacks = 16;
+// Sudut hadap kamera (Yaw = Kanan/Kiri). -90 derajat agar langsung menghadap lurus ke depan jalan
+float yaw   = -90.0f;
+float pitch =   0.0f; // 0.0f artinya pandangan mata datar (tidak menunduk/mendongak)
 
-/* GLUT callback Handlers */
+// --- PARAMETER SENSITIVITAS KECEPATAN DASAR ---
+// Nilai di bawah ini diatur menggunakan acuan per detik (Standar Game Realistis)
+float basisSpeed  = 8.0f;   // Kecepatan melangkah kaki normal (8 unit per detik)
+float basisNengok = 65.0f;  // Kecepatan putar badan/rotasi nyaman (65 derajat per detik)
 
-static void resize(int width, int height)
-{
-    const float ar = (float) width / (float) height;
+// Variabel pengontrol waktu untuk mengunci FPS agar pergerakan tidak melompat gasing
+float deltaTime = 0.0f;	// Waktu jeda antar frame terakhir
+float lastFrame = 0.0f;	// Waktu perekaman frame sebelumnya
 
-    glViewport(0, 0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glFrustum(-ar, ar, -1.0, 1.0, 2.0, 100.0);
+// =========================================================================
+// FUNGSI PEMBANTU MENGGAMBAR KUBUS CUSTOM (PENGGANTI GLUT)
+// =========================================================================
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity() ;
+void drawCube(float lebar, float tinggi, float panjang) { //INI CETAKAN KUBUSNYA
+    // Menggambar bentuk dasar kubus 3D dengan ukuran dinamis sesuai input skala parameter
+    glPushMatrix();
+        glScalef(lebar, tinggi, panjang);
+        glBegin(GL_QUADS);
+            // Sisi Depan
+            glVertex3f(-0.5f, -0.5f,  0.5f); glVertex3f( 0.5f, -0.5f,  0.5f);
+            glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f(-0.5f,  0.5f,  0.5f);
+            // Sisi Belakang
+            glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
+            glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f( 0.5f, -0.5f, -0.5f);
+            // Sisi Atas
+            glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f(-0.5f,  0.5f,  0.5f);
+            glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f( 0.5f,  0.5f, -0.5f);
+            // Sisi Bawah
+            glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f( 0.5f, -0.5f, -0.5f);
+            glVertex3f( 0.5f, -0.5f,  0.5f); glVertex3f(-0.5f, -0.5f,  0.5f);
+            // Sisi Kanan
+            glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f( 0.5f,  0.5f, -0.5f);
+            glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f( 0.5f, -0.5f,  0.5f);
+            // Sisi Kiri
+            glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f(-0.5f, -0.5f,  0.5f);
+            glVertex3f(-0.5f,  0.5f,  0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
+        glEnd();
+    glPopMatrix();
 }
 
-static void display(void)
-{
-    const double t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    const double a = t*90.0;
+// =========================================================================
+// FUNGSI MENGGAMBAR ENVIRONMENT FONDASI MAP (TANAH & JALAN)
+// =========================================================================
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glColor3d(1,0,0);
-
-    glPushMatrix();
-        glTranslated(-2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidSphere(1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(0,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutSolidTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(-2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireSphere(1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(0,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireCone(1,1,slices,stacks);
-    glPopMatrix();
-
-    glPushMatrix();
-        glTranslated(2.4,-1.2,-6);
-        glRotated(60,1,0,0);
-        glRotated(a,0,0,1);
-        glutWireTorus(0.2,0.8,slices,stacks);
-    glPopMatrix();
-
-    glutSwapBuffers();
+void drawGround() {
+    glColor3f(0.2f, 0.5f, 0.2f); // Hijau Rumput
+    glBegin(GL_QUADS);
+        glVertex3f(-50.0f, 0.0f, -50.0f);
+        glVertex3f(-50.0f, 0.0f,  50.0f);
+        glVertex3f( 50.0f, 0.0f,  50.0f);
+        glVertex3f( 50.0f, 0.0f, -50.0f);
+    glEnd();
 }
 
+void drawRoad() {
+    glColor3f(0.4f, 0.4f, 0.4f); // Abu-abu Paving block
+    glBegin(GL_QUADS);
+        // Jalan Utama Lurus Vertikal (Nilai Y dinaikkan 0.01f agar tekstur tidak flicker berkedip)
+        glVertex3f(-6.0f, 0.01f, -40.0f); glVertex3f(-6.0f, 0.01f,  40.0f);
+        glVertex3f( 2.0f, 0.01f,  40.0f); glVertex3f( 2.0f, 0.01f, -40.0f);
 
-static void key(unsigned char key, int x, int y)
-{
-    switch (key)
-    {
-        case 27 :
-        case 'q':
-            exit(0);
-            break;
+        // Tikungan Belokan Horizontal ke Kanan (Sesuai denah kertas kelompok)
+        glVertex3f(-6.0f, 0.01f, -25.0f); glVertex3f(-6.0f, 0.01f, -15.0f);
+        glVertex3f( 35.0f, 0.01f, -15.0f); glVertex3f( 35.0f, 0.01f, -25.0f);
 
-        case '+':
-            slices++;
-            stacks++;
-            break;
+        glVertex3f( 2.0f, 0.01f,  25.0f); // Titik 1 (Kiri-Bawah)
+        glVertex3f( 2.0f, 0.01f,  14.0f); // Titik 2 (Kiri-Atas)
+        glVertex3f( 12.0f, 0.01f,  14.0f); // Titik 3 (Kanan-Atas)
+        glVertex3f( 12.0f, 0.01f,  25.0f); // Titik 4 (Kanan-Bawah)
+    glEnd();
+}
 
-        case '-':
-            if (slices>3 && stacks>3)
-            {
-                slices--;
-                stacks--;
-            }
-            break;
+// =========================================================================
+// FUNSI KAPLING BLOK DUMMY / WHITEBOXING PENANDA MAKET
+// =========================================================================
+
+void drawBangunanBesarAtas() {
+    glColor3f(0.7f, 0.3f, 0.3f); // Merah Bata (Candi / Gedung Utama)
+    drawCube(20.0f, 10.0f, 10.0f); //MENENTUKAN BESAR KECILNYA KUBUS
+}
+
+void drawRumahKiri() {
+    // 🏠 AREA KAPLING KERJA KAMUS (Pindahkan kodingan detail rumahmu ke sini besok di branch 'rumah-oren')
+    glColor3f(0.9f, 0.5f, 0.0f); // Warna Oren
+    drawCube(6.0f, 5.0f, 6.0f);
+}
+
+void drawKotakKecilHijau() {
+    glColor3f(0.1f, 0.4f, 0.1f); // Hijau Tua (Penanda dekorasi/pohon/gazebo)
+    drawCube(2.0f, 3.0f, 2.0f);
+}
+
+void drawRumahSedangBaru() {
+    glColor3f(0.8f, 0.6f, 0.2f); // Warna Cokelat Muda / Krem Emas sebagai pembeda
+    // Ukuran sedang: Lebar 10, Tinggi 6, Panjang 8
+    drawCube(10.0f, 6.0f, 8.0f);
+}
+
+// =========================================================================
+// LOGIKA SINKRONISASI INPUT JALAN & ROTASI (HALUS CONCURRENT)
+// =========================================================================
+
+void processInput(GLFWwindow *window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    // MENGALIKAN INPUT DENGAN DELTATIME (Kunci utama penstabil pergerakan normal)
+    float currentSpeed       = basisSpeed * deltaTime;   // Kecepatan jalan konstan
+    float currentNengokSpeed = basisNengok * deltaTime;  // Kecepatan toleh konstan halus
+
+    // 1. TOMBOL NAVIGASI MELANGKAH JALAN (W, A, S, D)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // MAJU
+        cameraPos += currentSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // MUNDUR
+        cameraPos -= currentSpeed * cameraFront;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // STRAFE/GESER KIRI
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // STRAFE/GESER KANAN
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
+
+    // 2. TOMBOL PUTAR BADAN TOLEH 360 DERAJAT (TOMBOL PANAH KIRI/KANAN)
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) { // NENGOK KIRI
+        yaw -= currentNengokSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) { // NENGOK KANAN
+        yaw += currentNengokSpeed;
     }
 
-    glutPostRedisplay();
+    // Mengunci posisi Pitch datar agar kamera tidak mendongak ke langit/tanah secara tidak sengaja
+    pitch = 0.0f;
+
+    // Kalkulasi proyeksi matematika vektor arah pandang baru
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
 }
 
-static void idle(void)
-{
-    glutPostRedisplay();
-}
+// =========================================================================
+// INTIPROGRAM UTAMA DAN RENDER ENGINE LOOP
+// =========================================================================
 
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+int main() {
+   if (!glfwInit()) return -1;
 
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
+    GLFWwindow* window = glfwCreateWindow(960, 540, "Proyek 3D GLFW - Kalibrasi Sukses", NULL, NULL);
+    if (!window) {
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
 
-/* Program entry point */
-
-int main(int argc, char *argv[])
-{
-    glutInit(&argc, argv);
-    glutInitWindowSize(640,480);
-    glutInitWindowPosition(10,10);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
-
-    glutCreateWindow("GLUT Shapes");
-
-    glutReshapeFunc(resize);
-    glutDisplayFunc(display);
-    glutKeyboardFunc(key);
-    glutIdleFunc(idle);
-
-    glClearColor(1,1,1,1);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    // --- TAMBAHKAN BARIS INI DI SINI ---
+    // Mengatur warna latar belakang (langit). Formatnya (Red, Green, Blue, Alpha) dari 0.0f sampai 1.0f.
+    // Angka di bawah ini akan menghasilkan warna Biru Langit Cerah (Sky Blue).
+    glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
 
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
 
-    glEnable(GL_LIGHT0);
-    glEnable(GL_NORMALIZE);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_LIGHTING);
+    // LOOP GAME UTAMA (Berjalan terus-menerus sebelum window ditutup/silang)
+    while (!glfwWindowShouldClose(window)) {
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+        // --- PROSES MENGHITUNG DURASI WAKTU ANTAR FRAME (DELTATIME CORES) ---
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
 
-    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+        // Baca deteksi tombol keyboard
+        processInput(window);
 
-    glutMainLoop();
+        // Bersihkan layar belakang grafis
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glLoadIdentity();
 
-    return EXIT_SUCCESS;
+        // -----------------------------------------------------------------
+        // KONFIGURASI PROYEKSI LENSA KAMERA PERSPEKTIF
+        // -----------------------------------------------------------------
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glm::mat4 projection = glm::perspective(glm::radians(65.0f), 960.0f / 540.0f, 0.1f, 100.0f);
+        glLoadMatrixf(glm::value_ptr(projection));
+
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+
+        // -----------------------------------------------------------------
+        // MATRIKS NAVIGASI POSISI PANDANGAN MATA (LOOK-AT MATRICES)
+        // -----------------------------------------------------------------
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glLoadMatrixf(glm::value_ptr(view));
+
+        // -----------------------------------------------------------------
+        // PROSES DRAWING & PLOTTING STRUKTUR DUNIA SESUAI KOORDINAT DENAH
+        // -----------------------------------------------------------------
+        drawGround();
+        drawRoad();
+
+        // 1. Plotting Gedung Besar Atas (Ditaruh di kanan X=10, mundur Z=-32)
+        // Nilai Y=5.0f diatur pas agar dasarnya tepat menempel di permukaan tanah (10/2)
+        glPushMatrix();
+            glTranslatef(3.0f, 5.0f, -30.0f);
+            drawBangunanBesarAtas();
+        glPopMatrix();
+
+        // 2. Plotting Rumah Sedang Kiri (Ditaruh di kiri jalan X=-12, mundur Z=-20)
+        glPushMatrix();
+            glTranslatef(-12.0f, 2.5f, -20.0f);
+            drawRumahKiri();
+        glPopMatrix();
+
+        // 3. Plotting Barisan 4 Kotak Dekorasi di Sisi Kiri Jalan (Loop otomatis rapi)
+        for(int i = 0; i < 4; i++) {
+            glPushMatrix();
+                glTranslatef(-11.0f, 1.5f, -10.0f + (i * 8.0f));
+                drawKotakKecilHijau();
+            glPopMatrix();
+        }
+
+        // 4. Plotting Kotak-Kotak Kecil di Sisi Taman Sebelah Kanan Jalan
+        glPushMatrix();
+            glTranslatef(8.0f, 1.5f, -12.0f); // Taman kanan-atas
+            drawKotakKecilHijau();
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslatef(22.0f, 1.5f, -12.0f); // Taman kanan-pojok
+            drawKotakKecilHijau();
+        glPopMatrix();
+
+        // =================================================================
+        // BARU: Plotting Rumah Sedang di Depan Jalan Belokan
+        // =================================================================
+        glPushMatrix();
+            // X=7.0f (di tengah jalan baru), Y=3.0f (pas di tanah), Z=9.0f (pinggir jalan baru)
+            glTranslatef(17.0f, 3.0f, 20.0f);
+            drawRumahSedangBaru();
+        glPopMatrix();
+
+        // Tukar frame buffer ke layar monitor dan periksa event sistem
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    // Bersihkan resource memori GLFW sebelum keluar program
+    glfwTerminate();
+    return 0;
 }
