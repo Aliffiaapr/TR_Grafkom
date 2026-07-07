@@ -3,6 +3,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include "objekGanesha.h" // Tambahkan ini agar main.cpp kenal file Ganesha-mu
+#include "objekPohon.h"
+#include "objekBunga.h"
+#include "objekSemak.h"
+#include "objekPembatas.h"
 
 // =========================================================================
 // VARIABLE KONTROL KAMERA (SKALA NORMAL, STABIL & HALUS)
@@ -72,21 +77,89 @@ void drawGround() {
 }
 
 void drawRoad() {
-    glColor3f(0.4f, 0.4f, 0.4f); // Abu-abu Paving block
-    glBegin(GL_QUADS);
-        // Jalan Utama Lurus Vertikal (Nilai Y dinaikkan 0.01f agar tekstur tidak flicker berkedip)
-        glVertex3f(-6.0f, 0.01f, -40.0f); glVertex3f(-6.0f, 0.01f,  40.0f);
-        glVertex3f( 2.0f, 0.01f,  40.0f); glVertex3f( 2.0f, 0.01f, -40.0f);
+    // -----------------------------------------------------------------
+    // 1. DASARAN JALAN / NAT SEMEN (Lapis Bawah Berwarna Cokelat Tanah)
+    // -----------------------------------------------------------------
+    glColor3f(0.35f, 0.35f, 0.35f); // WARNA DI BAWAH PAVING
+    glPushMatrix();
+        // Jalan Utama Lurus Vertikal
+        glBegin(GL_QUADS);
+            glVertex3f(-6.0f, 0.01f, -40.0f); glVertex3f(-6.0f, 0.01f,  40.0f);
+            glVertex3f( 2.0f, 0.01f,  40.0f); glVertex3f( 2.0f, 0.01f, -40.0f);
+        glEnd();
 
         // Tikungan Belokan Horizontal ke Kanan (Sesuai denah kertas kelompok)
-        glVertex3f(-6.0f, 0.01f, -25.0f); glVertex3f(-6.0f, 0.01f, -15.0f);
-        glVertex3f( 35.0f, 0.01f, -15.0f); glVertex3f( 35.0f, 0.01f, -25.0f);
+        glBegin(GL_QUADS);
+            glVertex3f(-6.0f, 0.01f, -25.0f); glVertex3f(-6.0f, 0.01f, -15.0f);
+            glVertex3f( 35.0f, 0.01f, -15.0f); glVertex3f( 35.0f, 0.01f, -25.0f);
+        glEnd();
 
-        glVertex3f( 2.0f, 0.01f,  25.0f); // Titik 1 (Kiri-Bawah)
-        glVertex3f( 2.0f, 0.01f,  14.0f); // Titik 2 (Kiri-Atas)
-        glVertex3f( 12.0f, 0.01f,  14.0f); // Titik 3 (Kanan-Atas)
-        glVertex3f( 12.0f, 0.01f,  25.0f); // Titik 4 (Kanan-Bawah)
-    glEnd();
+        // Blok Pertigaan Tambahan Kanan Bawah
+        glBegin(GL_QUADS);
+            glVertex3f( 2.0f,  0.01f,  14.0f); glVertex3f( 2.0f,  0.01f,  25.0f);
+            glVertex3f( 12.0f, 0.01f,  25.0f); glVertex3f( 12.0f, 0.01f,  14.0f);
+        glEnd();
+    glPopMatrix();
+
+    // -----------------------------------------------------------------
+    // 2. PROSES REPLIKASI BLOK PAVING BERPOLA (MURNI GEOMETRI 3D)
+    // -----------------------------------------------------------------
+    glColor3f(0.5f, 0.5f, 0.5f); // Warna Abu-abu Tua Sedang (Pas)
+
+    // Ukuran satu unit paving block kecil
+    float lebarPaving  = 0.8f;
+    float panjangPaving = 0.4f;
+    float tebalPaving   = 0.02f;
+
+    float celah = 0.05f;
+    int baris = 0;
+
+    // LOOP A: JALAN UTAMA VERTIKAL (Dari Z = -40.0f sampai Z = 40.0f)
+    for (float posZ = -40.0f; posZ < 40.0f; posZ += (panjangPaving + celah)) {
+        baris++;
+        float offsetX = (baris % 2 == 0) ? 0.0f : (lebarPaving / 2.0f);
+
+        for (float posX = -6.0f; posX < 2.0f; posX += (lebarPaving + celah)) {
+            if (posX + offsetX + (lebarPaving/2.0f) <= 2.0f && posX + offsetX - (lebarPaving/2.0f) >= -6.0f) {
+                glPushMatrix();
+                    glTranslatef(posX + offsetX, 0.02f, posZ);
+                    drawCube(lebarPaving, tebalPaving, panjangPaving);
+                glPopMatrix();
+            }
+        }
+    }
+
+    // LOOP B: BELOKAN HORIZONTAL ATAS (Dari X = 2.0f sampai X = 35.0f)
+    for (float posX = 2.0f; posX < 35.0f; posX += (panjangPaving + celah)) {
+        baris++;
+        float offsetZ = (baris % 2 == 0) ? 0.0f : (lebarPaving / 2.0f);
+
+        for (float posZ = -25.0f; posZ < -15.0f; posZ += (lebarPaving + celah)) {
+            if (posZ + offsetZ + (lebarPaving/2.0f) <= -14.9f && posZ + offsetZ - (lebarPaving/2.0f) >= -25.1f) {
+                glPushMatrix();
+                    glTranslatef(posX, 0.02f, posZ + offsetZ);
+                    drawCube(panjangPaving, tebalPaving, lebarPaving);
+                glPopMatrix();
+            }
+        }
+    }
+
+    // --- TAMBAHAN BARU DI SINI ---
+    // LOOP C: PERTIGAAN KANAN BAWAH DEPAN RUMAH KUNING (Dari X = 2.0f sampai X = 12.0f)
+    for (float posX = 2.0f; posX < 12.0f; posX += (panjangPaving + celah)) {
+        baris++;
+        float offsetZ = (baris % 2 == 0) ? 0.0f : (lebarPaving / 2.0f);
+
+        for (float posZ = 14.0f; posZ < 25.0f; posZ += (lebarPaving + celah)) {
+            if (posZ + offsetZ + (lebarPaving/2.0f) <= 25.1f && posZ + offsetZ - (lebarPaving/2.0f) >= 13.9f) {
+                glPushMatrix();
+                    glTranslatef(posX, 0.02f, posZ + offsetZ);
+                    drawCube(panjangPaving, tebalPaving, lebarPaving);
+                glPopMatrix();
+            }
+        }
+    }
+    // -----------------------------
 }
 
 // =========================================================================
@@ -185,7 +258,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 // =========================================================================
 
 int main() {
-   if (!glfwInit()) return -1;
+      if (!glfwInit()) return -1;
 
     GLFWwindow* window = glfwCreateWindow(960, 540, "Proyek 3D GLFW - Kalibrasi Sukses", NULL, NULL);
     if (!window) {
@@ -258,13 +331,32 @@ int main() {
             drawRumahKiri();
         glPopMatrix();
 
-        // 3. Plotting Barisan 4 Kotak Dekorasi di Sisi Kiri Jalan (Loop otomatis rapi)
-        for(int i = 0; i < 4; i++) {
-            glPushMatrix();
-                glTranslatef(-11.0f, 1.5f, -10.0f + (i * 8.0f));
-                drawKotakKecilHijau();
-            glPopMatrix();
-        }
+        glPushMatrix();
+            glTranslatef(-11.0f, 1.5f, -10.0f);
+            drawKotakKecilHijau();
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslatef(-11.0f, 1.5f, -2.0f);
+            drawObjectGanesha(); //INI OBJEK GANESHA
+
+        glPopMatrix();
+
+        // Kotak Ketiga
+        glPushMatrix();
+            glTranslatef(-11.0f, 0.0f, 6.0f);
+            drawObjekPohon(); //INI OBJEK POHON SAMPING GANESHA
+        glPopMatrix();
+
+        glPushMatrix();
+            glTranslatef(-9.0f, 0.0f, 6.0f);
+            drawPohonMungil(); //INI OBJEK BUNGAAAA
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(-11.0f, 0.0f, 9.0f);
+            objekSemak(); //INI OBJEK semak
+        glPopMatrix();
+
 
         // 4. Plotting Kotak-Kotak Kecil di Sisi Taman Sebelah Kanan Jalan
         glPushMatrix();
@@ -285,6 +377,52 @@ int main() {
             glTranslatef(17.0f, 3.0f, 20.0f);
             drawRumahSedangBaru();
         glPopMatrix();
+        glPushMatrix();
+            max: glTranslatef(20.0f, 0.0f, 27.0f);
+            objekSemak(); //INI OBJEK semak KANAN
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(15.0f, 0.0f, 27.0f);
+            objekSemak(); //INI OBJEK semak KANAN
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(10.0f, 0.0f, 27.0f);
+            objekSemak(); //INI OBJEK semak KANAN
+        glPopMatrix();
+
+
+        // PAGAR KIRI DEPAN
+        glPushMatrix();
+            glTranslatef(-21.5f, 0.0f, 30.0f); // Posisi belakang
+            drawPagarSegment(15.0f);            // Pagar mendatar (Sumbu X) sepanjang 15 unit
+        glPopMatrix();
+
+        // PAGAR KANAN DEPAN
+        glPushMatrix();
+            glTranslatef(5.0f, 0.0f, 30.0f); // Pas di batas utara jalan baru
+            drawPagarSegment(20.0f);           // Memanjang 20 unit ke kanan
+        glPopMatrix();
+
+        glPushMatrix();
+            // Start dari ujung kiri pagar depan (X = -21.5f), ditarik mundur ke belakang
+            glTranslatef(-21.5f, 0.0f, 30.0f);
+            // PUTAR 90 DERAJAT agar jalur pagarnya memanjang ke arah Sumbu Z (Mundur)
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            drawPagarSegment(50.0f); // Sesuaikan panjangnya mundur ke belakang (misal 40 unit)
+        glPopMatrix();
+
+        // =================================================================
+        // PAGAR SAMPING KANAN (Menutup Area Rumah Baru ke Belakang)
+        // =================================================================
+        glPushMatrix();
+            // Start dari ujung kanan pagar depan (X = 5.0f + panjang 20.0f = 25.0f)
+            glTranslatef(25.0f, 0.0f, 30.0f);
+            // PUTAR 90 DERAJAT agar jalur pagarnya memanjang sejajar sumbu samping (Z)
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            drawPagarSegment(50.0f); // Sesuaikan panjang mundur ke belakang
+        glPopMatrix();
+
+
 
         // Tukar frame buffer ke layar monitor dan periksa event sistem
         glfwSwapBuffers(window);

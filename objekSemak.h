@@ -1,0 +1,6 @@
+#ifndef OBJEKSEMAK_H_INCLUDED
+#define OBJEKSEMAK_H_INCLUDED
+
+
+void objekSemak();
+#endif // OBJEKSEMAK_H_INCLUDED
