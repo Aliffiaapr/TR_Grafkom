@@ -1,11 +1,11 @@
 # depslib dependency file v1.0
-1783331270 source:d:\documents\github\tr_grafkom\objekganesha.cpp
+1783509192 source:d:\documents\github\tr_grafkom\objekganesha.cpp
 	"objekGanesha.h"
 
-1783330024 d:\documents\github\tr_grafkom\objekganesha.h
+1783509192 d:\documents\github\tr_grafkom\objekganesha.h
 	<GLFW/glfw3.h>
 
-1783393679 source:d:\documents\github\tr_grafkom\main.cpp
+1783579990 source:d:\documents\github\tr_grafkom\main.cpp
 	<GLFW/glfw3.h>
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
@@ -16,12 +16,19 @@
 	"objekBunga.h"
 	"objekSemak.h"
 	"objekPembatas.h"
-	"stb_image.h"
+	"objekRumahPutih.h"
+	"objekBangku.h"
+	"objekTaman.h"
+	"cagarBudaya.h"
+	"gazeboKiri.h"
+	"gedungMuseum.h"
+	"balok.h"
+	"objekBangkuMeja.h"
 
-1783335230 source:d:\documents\github\tr_grafkom\objekpohon.cpp
+1783509192 source:d:\documents\github\tr_grafkom\objekpohon.cpp
 	"objekPohon.h"
 
-1783331654 d:\documents\github\tr_grafkom\objekpohon.h
+1783509192 d:\documents\github\tr_grafkom\objekpohon.h
 	<GLFW/glfw3.h>
 
 1783333330 d:\documents\github\tr_grafkom\pohonmungil.h
@@ -955,24 +962,24 @@
 1738705850 c:\program files\codeblocks\mingw\x86_64-w64-mingw32\include\gl\glu.h
 	<GL/gl.h>
 
-1783335668 d:\documents\github\tr_grafkom\objeksemak.h
+1783509192 d:\documents\github\tr_grafkom\objeksemak.h
 
-1783336010 d:\documents\github\tr_grafkom\objekbunga.h
+1783509192 d:\documents\github\tr_grafkom\objekbunga.h
 	<GLFW/glfw3.h>
 
-1783336021 source:d:\documents\github\tr_grafkom\objekbunga.cpp
+1783509192 source:d:\documents\github\tr_grafkom\objekbunga.cpp
 	"objekBunga.h"
 	<cmath>
 
-1783338187 source:d:\documents\github\tr_grafkom\objeksemak.cpp
+1783509192 source:d:\documents\github\tr_grafkom\objeksemak.cpp
 	<windows.h>
 	<GL/gl.h>
 	"objekSemak.h"
 
-1783390234 d:\documents\github\tr_grafkom\objekpembatas.h
+1783509192 d:\documents\github\tr_grafkom\objekpembatas.h
 	<GLFW/glfw3.h>
 
-1783390885 source:d:\documents\github\tr_grafkom\objekpembatas.cpp
+1783509192 source:d:\documents\github\tr_grafkom\objekpembatas.cpp
 	"objekPembatas.h"
 
 1783393481 d:\documents\github\tr_grafkom\stb_image.h
@@ -1019,4 +1026,67 @@
 1738705850 c:\program files\codeblocks\mingw\x86_64-w64-mingw32\include\stdint.h
 	<crtdefs.h>
 	<stddef.h>
+
+1783530564 source:d:\documents\github\tr_grafkom\objekrumahputih.cpp
+	"objekRumahPutih.h"
+	<GLFW/glfw3.h>
+	<glm/glm.hpp>
+	<glm/gtc/matrix_transform.hpp>
+	<glm/gtc/type_ptr.hpp>
+
+1783519233 d:\documents\github\tr_grafkom\objekrumahputih.h
+	<GLFW/glfw3.h>
+
+1783530256 source:d:\documents\github\tr_grafkom\objekbangku.cpp
+	"objekBangku.h"
+	<GLFW/glfw3.h>
+
+1783520844 d:\documents\github\tr_grafkom\objekbangku.h
+
+1783528892 source:d:\documents\github\tr_grafkom\objektaman.cpp
+	"objekTaman.h"
+	<GLFW/glfw3.h>
+	<cmath>
+
+1783522726 d:\documents\github\tr_grafkom\objektaman.h
+
+1783528086 source:d:\documents\github\tr_grafkom\balok.cpp
+	"balok.h"
+
+1783528086 d:\documents\github\tr_grafkom\balok.h
+	<GLFW/glfw3.h>
+
+1783532918 source:d:\documents\github\tr_grafkom\cagarbudaya.cpp
+	"cagarBudaya.h"
+	"balok.h"
+
+1783528086 d:\documents\github\tr_grafkom\cagarbudaya.h
+	<GLFW/glfw3.h>
+
+1783532538 source:d:\documents\github\tr_grafkom\gedungmuseum.cpp
+	"gedungMuseum.h"
+	"balok.h"
+
+1783528086 d:\documents\github\tr_grafkom\gedungmuseum.h
+	<GLFW/glfw3.h>
+
+1783528086 source:d:\documents\github\tr_grafkom\halaman.cpp
+	"halaman.h"
+
+1783528086 d:\documents\github\tr_grafkom\halaman.h
+	<GLFW/glfw3.h>
+
+1783530083 source:d:\documents\github\tr_grafkom\gazebokiri.cpp
+	"gazeboKiri.h"
+	"balok.h"
+	<GLFW/glfw3.h>
+
+1783528086 d:\documents\github\tr_grafkom\gazebokiri.h
+	<GLFW/glfw3.h>
+
+1783568101 d:\documents\github\tr_grafkom\objekbangkumeja.h
+
+1783579818 source:d:\documents\github\tr_grafkom\objekbangkumeja.cpp
+	"objekBangkuMeja.h"
+	"balok.h"
 
