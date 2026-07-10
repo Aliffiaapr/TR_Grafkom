@@ -1,5 +1,48 @@
 #include "objekGanesha.h"
 
+// Deklarasi untuk STB Image
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include <iostream>
+
+// Fix error GL_CLAMP_TO_EDGE untuk MinGW Windows
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
+
+// Variabel global untuk menyimpan ID tekstur
+static GLuint ganeshaTex = 0;
+static bool isTextureLoaded = false;
+
+// Fungsi untuk memuat tekstur
+void loadGaneshaTexture() {
+    if (isTextureLoaded) return; // Mencegah load berulang-ulang tiap frame
+
+    int width, height, nrChannels;
+    // Balik gambar secara vertikal agar tidak terbalik (upside down) di OpenGL
+    stbi_set_flip_vertically_on_load(true); 
+    
+    // Pastikan load dengan format 4 channel (RGBA) untuk mendukung transparansi PNG
+    unsigned char *data = stbi_load("ganesha.png", &width, &height, &nrChannels, 4);
+
+    if(data) {
+        glGenTextures(1, &ganeshaTex);
+        glBindTexture(GL_TEXTURE_2D, ganeshaTex);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        stbi_image_free(data);
+        isTextureLoaded = true;
+    } else {
+        std::cout << "Gagal memuat file gambar ganesha.png! Pastikan file ada di folder yang sama dengan main.exe" << std::endl;
+    }
+}
+
+// Fungsi menggambar balok (tetap dipertahankan untuk menggambar tatakan/meja)
 void drawGaneshaBlock(float sx, float sy, float sz) {
     glBegin(GL_QUADS);
         // Depan
@@ -30,65 +73,92 @@ void drawGaneshaBlock(float sx, float sy, float sz) {
 }
 
 void drawObjectGanesha() {
+    // Pastikan tekstur sudah diload sebelum digambar
+    if (!isTextureLoaded) {
+        loadGaneshaTexture();
+    }
+
     glEnable(GL_DEPTH_TEST);
+    glPushMatrix();
+
+    // ==========================================
+    // 1. BAGIAN TATAKAN (Tanpa Tekstur Gambar)
+    // ==========================================
+    glDisable(GL_TEXTURE_2D); // Matikan tekstur sebentar untuk gambar balok polos
+
+    // Balok Putih (alas dasar paling bawah)
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glPushMatrix();
+        glTranslatef(0.0f, -1.6f, 0.0f);
+        drawGaneshaBlock(6.0f, 0.6f, 6.0f);
+    glPopMatrix();
+
+    // Tatakan Abu-abu (tempat Ganesha duduk)
+    glColor3f(0.3f, 0.3f, 0.3f);
+    glPushMatrix();
+        glTranslatef(0.0f, -1.0f, 0.0f);
+        drawGaneshaBlock(5.0f, 0.6f, 5.0f);
+        glTranslatef(0.0f, 0.4f, 0.0f);
+        drawGaneshaBlock(4.0f, 0.4f, 4.0f);
+    glPopMatrix();
+
+    glColor3f(0.7f, 0.7f, 0.7f); 
+    
+    // Tentukan ukuran balok peninggi baru di sini
+    float balokLebarX = 2.2f; 
+    float balokTinggiY = 2.1f; // Ketinggian balok peninggi (Ubah ini jika ingin lebih tinggi/rendah)
+    float balokTebalZ  = 2.2f; 
 
     glPushMatrix();
-        // 0. Balok Putih (alas seperti meja)
-        glColor3f(1.0f, 1.0f, 1.0f); // putih
-        glPushMatrix();
-            glTranslatef(0.0f, -1.6f, 0.0f);
-            drawGaneshaBlock(6.0f, 0.6f, 6.0f);
-        glPopMatrix();
+        // Posisi Y dihitung agar menapak pas di atas permukaan tatakan terakhir
+        // Tatakan terakhir berada di Y = -1.0f + 0.4f = -0.6f dengan tinggi permukaan atas di -0.4f
+        // Karena drawGaneshaBlock sifatnya centered (dibagi 2), kita geser ke tengah-tengah tinggi balok baru
+        glTranslatef(0.0f, -0.4f + (balokTinggiY / 2.0f), 0.0f);
+        drawGaneshaBlock(balokLebarX, balokTinggiY, balokTebalZ);
+    glPopMatrix();
 
-        // 1. Tatakan Abu-abu di atas balok putih
-        glColor3f(0.5f, 0.5f, 0.5f);
-        glPushMatrix();
-            glTranslatef(0.0f, -1.0f, 0.0f);
-            drawGaneshaBlock(5.0f, 0.5f, 5.0f);
-            glTranslatef(0.0f, 0.4f, 0.0f);
-            drawGaneshaBlock(4.0f, 0.4f, 4.0f);
-        glPopMatrix();
+    // ==========================================
+    // BAGIAN ARCA: OPSI 2 (Y-AXIS BILLBOARDING)
+    // ==========================================
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, ganeshaTex);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-        // 2. Badan
-        glColor3f(0.6f, 0.6f, 0.6f);
-        glPushMatrix();
-            glTranslatef(0.0f, 0.7f, 0.0f);
-            drawGaneshaBlock(2.2f, 2.0f, 2.0f);
-        glPopMatrix();
+    float w = 2.0f; 
+    float h = 5.2f; 
 
-        // 3. Kepala & Mahkota
-        glColor3f(0.65f, 0.65f, 0.65f);
-        glPushMatrix();
-            glTranslatef(0.0f, 2.2f, 0.0f);
-            drawGaneshaBlock(1.4f, 1.2f, 1.4f);
-            // Telinga
-            glPushMatrix(); glTranslatef(1.0f, 0.1f, 0.0f); drawGaneshaBlock(0.4f, 0.8f, 0.6f); glPopMatrix();
-            glPushMatrix(); glTranslatef(-1.0f, 0.1f, 0.0f); drawGaneshaBlock(0.4f, 0.8f, 0.6f); glPopMatrix();
-            // Mahkota
-            glColor3f(0.8f, 0.8f, 0.8f);
-            glTranslatef(0.0f, 0.9f, 0.0f); drawGaneshaBlock(1.0f, 0.8f, 1.0f);
-            glTranslatef(0.0f, 0.5f, 0.0f); drawGaneshaBlock(0.6f, 0.4f, 0.6f);
-        glPopMatrix();
+    glPushMatrix();
+        // 1. Geser posisi ke atas meja tatakan dulu
+        glTranslatef(0.0f, -0.4f + balokTinggiY, 0.0f);
 
-        // 4. Belalai
-        glColor3f(0.6f, 0.6f, 0.6f);
-        glPushMatrix();
-            glTranslatef(0.0f, 2.0f, 0.7f); drawGaneshaBlock(0.4f, 0.4f, 0.6f);
-            glTranslatef(0.0f, -0.4f, 0.4f); drawGaneshaBlock(0.4f, 0.6f, 0.4f);
-            glTranslatef(0.2f, -0.3f, 0.2f); drawGaneshaBlock(0.5f, 0.3f, 0.4f);
-            glTranslatef(0.2f, -0.2f, 0.2f); drawGaneshaBlock(0.4f, 0.3f, 0.3f);
-        glPopMatrix();
+        // 2. TRICK BILLBOARD: Ambil matriks kamera saat ini dan reset rotasinya
+        float modelview[16];
+        glGetFloatv(GL_MODELVIEW_MATRIX, modelview);
+        
+        // Reset rotasi sumbu X, Y, Z objek agar selalu sejajar lurus dengan mata kamera
+        modelview[0] = 1.0f; modelview[1] = 0.0f; modelview[2] = 0.0f;
+        modelview[4] = 0.0f; modelview[5] = 1.0f; modelview[6] = 0.0f;
+        modelview[8] = 0.0f; modelview[9] = 0.0f; modelview[10] = 1.0f;
+        
+        glLoadMatrixf(modelview); // Terapkan matriks yang sudah di-reset rotasinya
 
-        // 5. Lengan
-        glColor3f(0.6f, 0.6f, 0.6f);
-        glPushMatrix(); glTranslatef(1.3f, 1.0f, 0.4f); drawGaneshaBlock(0.4f, 0.4f, 1.0f); glPopMatrix();
-        glPushMatrix(); glTranslatef(-1.3f, 1.0f, 0.4f); drawGaneshaBlock(0.4f, 0.4f, 1.0f); glPopMatrix();
-        glPushMatrix(); glTranslatef(1.4f, 1.5f, -0.4f); drawGaneshaBlock(0.4f, 0.8f, 0.4f); glPopMatrix();
-        glPushMatrix(); glTranslatef(-1.4f, 1.5f, -0.4f); drawGaneshaBlock(0.4f, 0.8f, 0.4f); glPopMatrix();
+        float offsetDuduk = -0.3f;
 
-        // 6. Kaki Bersila
-        glPushMatrix(); glTranslatef(0.9f, -0.2f, 0.5f); drawGaneshaBlock(1.4f, 0.6f, 1.0f); glPopMatrix();
-        glPushMatrix(); glTranslatef(-0.9f, -0.2f, 0.5f); drawGaneshaBlock(1.4f, 0.6f, 1.0f); glPopMatrix();
+        // 3. Gambar cukup 1 sisi datar (dia akan berputar otomatis mengikuti kamera)
+        glBegin(GL_QUADS);
+            glNormal3f(0.0f, 0.0f, 1.0f);
+            glTexCoord2f(0.0f, 0.0f); glVertex3f(-w, 0.0f, 0.0f);
+            glTexCoord2f(1.0f, 0.0f); glVertex3f( w, 0.0f, 0.0f);
+            glTexCoord2f(1.0f, 1.0f); glVertex3f( w, h,    0.0f);
+            glTexCoord2f(0.0f, 1.0f); glVertex3f(-w, h,    0.0f);
+        glEnd();
+    glPopMatrix();
+
+    // Matikan blending dan tekstur agar objek selanjutnya tidak ikut transparan
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
 
     glPopMatrix();
 }
