@@ -30,6 +30,40 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 float yaw   = -90.0f;
 float pitch =   0.0f; // 0.0f artinya pandangan mata datar (tidak menunduk/mendongak)
 
+bool isDragging = false;
+double lastX = 480.0;
+double lastY = 270.0;
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            isDragging = true;
+            glfwGetCursorPos(window, &lastX, &lastY);
+        } else if (action == GLFW_RELEASE) {
+            isDragging = false;
+        }
+    }
+}
+
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (isDragging) {
+        double xoffset = xpos - lastX;
+        double yoffset = lastY - ypos; // Terbalik: y berkisar dari bawah ke atas
+        lastX = xpos;
+        lastY = ypos;
+
+        float sensitivity = 0.2f;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw   += (float)xoffset;
+        pitch += (float)yoffset;
+
+        if (pitch > 89.0f) pitch = 89.0f;
+        if (pitch < -89.0f) pitch = -89.0f;
+    }
+}
+
 // --- PARAMETER SENSITIVITAS KECEPATAN DASAR ---
 // Nilai di bawah ini diatur menggunakan acuan per detik (Standar Game Realistis)
 float basisSpeed  = 8.0f;   // Kecepatan melangkah kaki normal (8 unit per detik)
@@ -182,7 +216,7 @@ void drawBangunanBesarAtas() {
 }
 
 void drawRumahKiri() {
-    // 🏠 AREA KAPLING KERJA KAMUS (Pindahkan kodingan detail rumahmu ke sini besok di branch 'rumah-oren')
+    // AREA KAPLING KERJA KAMUS (Pindahkan kodingan detail rumahmu ke sini besok di branch 'rumah-oren')
     glColor3f(0.9f, 0.5f, 0.0f); // Warna Oren
     drawCube(6.0f, 5.0f, 6.0f);
 }
@@ -228,9 +262,6 @@ void processInput(GLFWwindow *window) {
         yaw += currentNengokSpeed;
     }
 
-    // Mengunci posisi Pitch datar agar kamera tidak mendongak ke langit/tanah secara tidak sengaja
-    pitch = 0.0f;
-
     // Kalkulasi proyeksi matematika vektor arah pandang baru
     glm::vec3 front;
     front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -267,13 +298,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 // INTIPROGRAM UTAMA DAN RENDER ENGINE LOOP
 // =========================================================================
 
-int main() {
-      if (!glfwInit()) return -1;
+int main() { 
+    if (!glfwInit()) return -1;
 
     GLFWwindow* window = glfwCreateWindow(960, 540, "Proyek 3D GLFW - Kalibrasi Sukses", NULL, NULL);
     if (!window) {
         glfwTerminate();
-        return -1;
+        return -1;  
     }
     glfwMakeContextCurrent(window);
 
@@ -282,6 +313,8 @@ int main() {
 }
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 
     // --- TAMBAHKAN BARIS INI DI SINI ---
     // Mengatur warna latar belakang (langit). Formatnya (Red, Green, Blue, Alpha) dari 0.0f sampai 1.0f.
@@ -289,6 +322,9 @@ int main() {
     glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
 
     glEnable(GL_DEPTH_TEST);
+
+    // Inisialisasi tekstur museum (papan nama "MUSEUM SALATIGA")
+    initMuseumTextures();
 
     // LOOP GAME UTAMA (Berjalan terus-menerus sebelum window ditutup/silang)
     while (!glfwWindowShouldClose(window)) {
