@@ -191,8 +191,10 @@ void drawRumahPutih() {
 
         //Batu 1
         glPushMatrix(); 
-            // Y diatur ke kiri -0.25f agar posisi bawah batu pas mendarat di atas tatakan (tinggi tatakan = 0.30f)
-            glTranslatef(-0.25f, 0.51f, 0.0f); 
+            // Y diatur ke kiri agar posisi bawah batu pas mendarat di atas tatakan (tinggi tatakan = 0.30f)
+            glTranslatef(-0.38f, 0.51f, 0.355f); 
+
+            glScalef(0.75f, 0.75f, 0.75f); // mengecilkan ukuran 
             
             // Mengatur rotasi batu sedikit agar sudut lengkungan terbaiknya menghadap ke depan pintu
             glRotatef(45.0f, 0.0f, 1.0f, 0.0f); 
@@ -211,8 +213,9 @@ void drawRumahPutih() {
         //Batu 2
         glPushMatrix(); 
             // Y diatur ke kanan 0.25f agar posisi bawah batu pas mendarat di atas tatakan (tinggi tatakan = 0.30f)
-            glTranslatef(0.25f, 0.61f, 0.0f); 
-            glScalef(1.5f, 1.5f, 1.5f); //motif lebih besar dan bertekstur
+            glTranslatef(0.38f, 0.58f, -0.35f); 
+
+            glScalef(1.6f, 1.6f, 1.6f); //motif lebih besar dan bertekstur
             
             // Mengatur rotasi batu sedikit agar sudut lengkungan terbaiknya menghadap ke depan pintu
             glRotatef(160.0f, 0.0f, 1.0f, 0.0f); 
