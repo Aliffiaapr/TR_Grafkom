@@ -3,6 +3,45 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cmath>
+
+#include "stb_image.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+static GLuint batuTex = 0;
+static bool isBatuTextureLoaded = false;
+
+void loadBatuTexture() {
+    if (isBatuTextureLoaded) return; // Mencegah load berulang-ulang tiap frame
+
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); 
+    
+    // Membaca file gambar batu hasil crop kamu (pastikan namanya sesuai, misal "batu.png")
+    unsigned char *data = stbi_load("batu.png", &width, &height, &nrChannels, 4);
+
+    if (data) {
+        glGenTextures(1, &batuTex);
+        glBindTexture(GL_TEXTURE_2D, batuTex);
+
+        // Parameter tekstur standar agar gambar terulang dengan rapi
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // Upload gambar ke memori OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        
+        stbi_image_free(data);
+        isBatuTextureLoaded = true;
+
+        glDisable(GL_TEXTURE_2D);
+    }
+}
 
 // Fungsi pembantu khusus untuk rumah putih
 void drawBalokRumah(float r, float g, float b, float alpha) {
@@ -35,7 +74,51 @@ void drawBalokRumah(float r, float g, float b, float alpha) {
     glEnd();
 }
 
+void drawPrasastiPlumpungan(float rx, float ry, float rz, int laci, int cincin) {
+    for (int i = 0; i < laci; ++i) {
+        float lat0 = M_PI * (-0.5f + (float)(i) / laci);
+        float z0  = sin(lat0);
+        float rSub0 = cos(lat0);
+
+        float lat1 = M_PI * (-0.5f + (float)(i + 1) / laci);
+        float z1  = sin(lat1);
+        float rSub1 = cos(lat1);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= cincin; ++j) {
+            float lng = 2.0f * M_PI * (float)(j) / cincin;
+            float x = cos(lng);
+            float y = sin(lng);
+
+            // Efek benjolan dan lekukan acak khas batu kali purbakala
+            float distor0 = 1.0f + 0.14f * sin(lat0 * 4.0f) * cos(lng * 3.0f) 
+                                 + 0.04f * cos(lat0 * 10.0f) * sin(lng * 8.0f);
+                                 
+            float distor1 = 1.0f + 0.14f * sin(lat1 * 4.0f) * cos(lng * 3.0f) 
+                                 + 0.04f * cos(lat1 * 10.0f) * sin(lng * 8.0f);
+
+            // Meratakan bagian bawah batu sedikit agar menapak sempurna di tatakan
+            if (z0 < -0.2f) distor0 *= (1.0f + (z0 + 0.2f) * 0.25f);
+            if (z1 < -0.2f) distor1 *= (1.0f + (z1 + 0.2f) * 0.25f);
+
+            // Koordinat Normal untuk kalkulasi bayangan/pencahayaan
+            glNormal3f(x * rSub0, z0, y * rSub0);
+            
+            // Koordinat pemetaan tekstur gambar batu
+            glTexCoord2f((float)j / cincin, (float)i / laci);
+            glVertex3f(x * rSub0 * rx * distor0, z0 * ry * distor0, y * rSub0 * rz * distor0);
+
+            glNormal3f(x * rSub1, z1, y * rSub1);
+            glTexCoord2f((float)j / cincin, (float)(i + 1) / laci);
+            glVertex3f(x * rSub1 * rx * distor1, z1 * ry * distor1, y * rSub1 * rz * distor1);
+        }
+        glEnd();
+    }
+}
+
 void drawRumahPutih() {
+    glDisable(GL_TEXTURE_2D);
+    loadBatuTexture();
     glPushMatrix();
 
     // ==========================================
@@ -102,9 +185,49 @@ void drawRumahPutih() {
     // 3. PRASASTI BATU DI TENGAH RUANGAN
     // ==========================================
     glPushMatrix(); {
+        //tatakan hitam
         glPushMatrix(); glTranslatef(0.0f, 0.15f, 0.0f); glScalef(1.2f, 0.1f, 1.2f); drawBalokRumah(0.1f, 0.1f, 0.1f, 1.0f); glPopMatrix();
         glPushMatrix(); glTranslatef(0.0f, 0.25f, 0.0f); glScalef(0.9f, 0.1f, 0.9f); drawBalokRumah(0.15f, 0.15f, 0.15f, 1.0f); glPopMatrix();
-        glPushMatrix(); glTranslatef(0.0f, 0.7f, 0.0f); glScalef(0.5f, 0.8f, 0.5f); drawBalokRumah(0.55f, 0.55f, 0.55f, 1.0f); glPopMatrix();
+
+        //Batu 1
+        glPushMatrix(); 
+            // Y diatur ke kiri -0.25f agar posisi bawah batu pas mendarat di atas tatakan (tinggi tatakan = 0.30f)
+            glTranslatef(-0.25f, 0.51f, 0.0f); 
+            
+            // Mengatur rotasi batu sedikit agar sudut lengkungan terbaiknya menghadap ke depan pintu
+            glRotatef(45.0f, 0.0f, 1.0f, 0.0f); 
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+            //texturing
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, batuTex); 
+            
+            // Parameter: RadiusX (Lebar), RadiusY (Tinggi), RadiusZ (Tebal), Stacks, Slices
+            drawPrasastiPlumpungan(0.46f, 0.24f, 0.40f, 30, 30);
+            
+            glDisable(GL_TEXTURE_2D);
+        glPopMatrix();
+
+        //Batu 2
+        glPushMatrix(); 
+            // Y diatur ke kanan 0.25f agar posisi bawah batu pas mendarat di atas tatakan (tinggi tatakan = 0.30f)
+            glTranslatef(0.25f, 0.61f, 0.0f); 
+            glScalef(1.5f, 1.5f, 1.5f); //motif lebih besar dan bertekstur
+            
+            // Mengatur rotasi batu sedikit agar sudut lengkungan terbaiknya menghadap ke depan pintu
+            glRotatef(160.0f, 0.0f, 1.0f, 0.0f); 
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+            //texturing
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, batuTex); 
+            
+            // Parameter: RadiusX (Lebar), RadiusY (Tinggi), RadiusZ (Tebal), Stacks, Slices
+            drawPrasastiPlumpungan(0.46f, 0.24f, 0.40f, 30, 30);
+            
+            glDisable(GL_TEXTURE_2D);
+        glPopMatrix();
+
     } glPopMatrix();
 
     // ==========================================
@@ -145,6 +268,7 @@ void drawRumahPutih() {
 }
 
 void drawAtapRumahPutih() {
+    glDisable(GL_TEXTURE_2D);
     glPushMatrix();
 
     // ==========================================
@@ -226,3 +350,5 @@ void drawAtapRumahPutih() {
 
     glPopMatrix();
 }
+
+
