@@ -3,6 +3,10 @@
 
 #include <GLFW/glfw3.h>
 
-void gambarCagarBudayaDepan();
+void initCagarBudayaTextures();
+void gambarYoniKecil();
+void gambarYoniBesar();
+void gambarBatuRatna();
+void gambarBatuHitam();
 
 #endif

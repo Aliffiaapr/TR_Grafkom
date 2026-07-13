@@ -325,6 +325,7 @@ int main() {
 
     // Inisialisasi tekstur museum (papan nama "MUSEUM SALATIGA")
     initMuseumTextures();
+    initCagarBudayaTextures();
 
     // LOOP GAME UTAMA (Berjalan terus-menerus sebelum window ditutup/silang)
     while (!glfwWindowShouldClose(window)) {
@@ -387,11 +388,35 @@ int main() {
             gambarGazeboKiri(); // INI GAZEBO KIRI
         glPopMatrix();
 
+        // LOKASI 1: Sebelah Gazebo Kiri - batu yoni kecil
         glPushMatrix();
-            glTranslatef(-10.0f, 1.0f, -17.5f);
-            gambarCagarBudayaDepan(); //CAGAR BUDAYA DEPAN GAZEBO
+            glTranslatef(-11.0f, 1.0f, -17.5f); // Y diubah ke 1.0f agar menapak tanah
+            glScalef(2.5f, 2.5f, 2.5f);
+            gambarYoniKecil(); // Memanggil fungsi bentuk dari cagarBudaya.cpp
         glPopMatrix();
-         glPushMatrix();
+
+        // LOKASI 2: Dekat Rumah Putih - batu hitam
+        glPushMatrix();
+            glTranslatef(5.0f, 1.0f, -2.5f); // X digeser kanan, Z disesuaikan agar mundur mendekati rumah putih
+            glScalef(2.5f, 2.5f, 2.5f);
+            gambarBatuHitam();
+        glPopMatrix();
+
+        // LOKASI 3: Depan Bangku - batu ratna bulat
+        glPushMatrix();
+            glTranslatef(7.5f, 1.0f, -12.0f);
+            glScalef(2.5f, 2.5f, 2.5f);
+            gambarBatuRatna();
+        glPopMatrix();
+
+        // LOKASI 4: Dekat Pagar - batu yoni besar
+        glPushMatrix();
+            glTranslatef(17.5f, 1.0f, -20.0f); // Z disamakan dengan Biru (-17.0f), X diperbesar biar mepet pagar
+            glScalef(2.5f, 2.5f, 2.5f);
+            gambarYoniBesar();
+        glPopMatrix();
+
+        glPushMatrix();
             glTranslatef(-10.0f, 0.0f, -5.5f);
             drawBangkuMeja(); //INI BANGKU MEJA SAMPING GAZEBO
         glPopMatrix();
@@ -399,7 +424,6 @@ int main() {
         glPushMatrix();
             glTranslatef(-11.0f, 1.5f, 5.0f);
             drawObjectGanesha(); //INI OBJEK GANESHA
-
         glPopMatrix();
 
         glPushMatrix();
