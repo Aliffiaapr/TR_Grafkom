@@ -51,8 +51,8 @@ void initMuseumTextures() {
     posterLegendaTex = loadTexture("poster_legenda.jpg");
     posterProklamasiTex = loadTexture("poster_proklamasi.jpg");
     posterPetaTex = loadTexture("poster_peta.jpg");
-    arcaGaneshaTex = loadTexture("arca_ganesha.jpg");
-    arcaDuaSisiTex = loadTexture("arca_duasisi.jpg");
+    arcaGaneshaTex = loadTexture("arca_ganesha.png");
+    arcaDuaSisiTex = loadTexture("arca_duasisi.png");
 
     texLoaded = true;
 }
@@ -81,9 +81,9 @@ static void gambarPosterTekstur(float xMin, float xMax, float yMin, float yMax, 
             glBegin(GL_QUADS);
             glNormal3f(-1.0f, 0.0f, 0.0f);
             glTexCoord2f(0.0f, 0.0f); glVertex3f(xFace, yMin, zMax); // Kiri bawah (depan)
-            glTexCoord2f(1.0f, 0.0f); glVertex3f(xFace, yMin, zMin); // Kanan bawah (belakang)
-            glTexCoord2f(1.0f, 1.0f); glVertex3f(xFace, yMax, zMin); // Kanan atas (belakang)
             glTexCoord2f(0.0f, 1.0f); glVertex3f(xFace, yMax, zMax); // Kiri atas (depan)
+            glTexCoord2f(1.0f, 1.0f); glVertex3f(xFace, yMax, zMin); // Kanan atas (belakang)
+            glTexCoord2f(1.0f, 0.0f); glVertex3f(xFace, yMin, zMin); // Kanan bawah (belakang)
             glEnd();
         }
         glDisable(GL_TEXTURE_2D);
@@ -153,6 +153,67 @@ static void gambarBalokTekstur(float xMin, float xMax, float yMin, float yMax, f
     glEnd();
 }
 
+// =========================================================================
+// HELPER: GAMBAR BILLBOARD (gambar datar yang selalu menghadap kamera)
+// cx, cy, cz  = titik tengah alas billboard (kaki gambar)
+// width       = lebar dalam satuan WORLD (bukan lagi kena efek glScalef gedung)
+// height      = tinggi dalam satuan WORLD, diukur dari (cx,cy,cz) ke atas
+// =========================================================================
+static void gambarBillboard(float cx, float cy, float cz, float width, float height, GLuint tex, float r = 0.5f, float g = 0.5f, float b = 0.5f) {
+    glPushMatrix();
+    glTranslatef(cx, cy, cz);
+
+    // Ambil modelview matrix SETELAH ditranslasi ke posisi objek
+    GLfloat mv[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+
+    // Nolkan bagian rotasi + scale (3x3 kiri atas), sisakan translasi saja.
+    // Efeknya: sumbu lokal quad selalu sejajar sumbu kamera -> quad selalu
+    // "melihat" ke arah kamera dari sudut manapun kita mengorbit.
+    mv[0] = 1.0f; mv[1] = 0.0f; mv[2] = 0.0f;
+    mv[4] = 0.0f; mv[5] = 1.0f; mv[6] = 0.0f;
+    mv[8] = 0.0f; mv[9] = 0.0f; mv[10] = 1.0f;
+    glLoadMatrixf(mv);
+
+    float hw = width * 0.5f;
+
+    if (tex != 0) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+        // Buang piksel yang alpha-nya rendah (transparan) -> perlu PNG ber-alpha,
+        // JPG tidak punya kanal alpha jadi tidak akan berefek apa-apa di JPG.
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(GL_GREATER, 0.5f);
+
+        glBegin(GL_QUADS);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-hw, 0.0f,   0.0f);
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( hw, 0.0f,   0.0f);
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( hw, height, 0.0f);
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-hw, height, 0.0f);
+        glEnd();
+
+        glDisable(GL_ALPHA_TEST);
+        glDisable(GL_TEXTURE_2D);
+    } else {
+        // Fallback: texture gagal load -> tetap gambar plat warna solid
+        // supaya kelihatan ada objek (bukan hilang total), sekaligus jadi
+        // penanda visual "texture belum berhasil"
+        glColor3f(r, g, b);
+        glBegin(GL_QUADS);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glVertex3f(-hw, 0.0f,   0.0f);
+        glVertex3f( hw, 0.0f,   0.0f);
+        glVertex3f( hw, height, 0.0f);
+        glVertex3f(-hw, height, 0.0f);
+        glEnd();
+    }
+
+    glPopMatrix();
+}
+
 
 // =========================================================================
 // HELPER: GAMBAR VITRIN KACA TRANSPARAN
@@ -160,6 +221,7 @@ static void gambarBalokTekstur(float xMin, float xMax, float yMin, float yMax, f
 static void gambarVitrinKaca(float xMin, float xMax, float yMin, float yMax, float zMin, float zMax) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE); // Jangan tulis depth buffer -> tidak menutupi isi vitrin yang digambar setelahnya
 
     // Panel Depan
     glBegin(GL_QUADS);
@@ -194,6 +256,7 @@ static void gambarVitrinKaca(float xMin, float xMax, float yMin, float yMax, flo
     glEnd();
 
     glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE); // Nyalakan lagi depth write untuk objek opaque berikutnya
 }
 
 // =========================================================================
@@ -224,22 +287,18 @@ static void gambarRakSegitiga(float cx, float yBase, float cz) {
 // HELPER: ARCA DUA SISI (ref 10) - LEBIH DETAIL
 // =========================================================================
 static void gambarArcaDuaSisi(float cx, float yBase, float cz, float scale) {
-    // Balok 3D tebal dengan tekstur arca di depan & belakang, sisi samping warna batu
-    gambarBalokTekstur(cx - 0.3f*scale, cx + 0.3f*scale,
-                       yBase, yBase + 1.3f*scale,
-                       cz - 0.15f*scale, cz + 0.15f*scale,
-                       arcaDuaSisiTex, 0.5f, 0.48f, 0.42f);
+    // Billboard datar, selalu menghadap kamera dari sudut manapun.
+    // Catatan: karena billboard "keluar" dari efek glScalef(2.5,3.5,3.8)
+    // pada gedung, width/height di sini pakai satuan WORLD, bukan lokal lagi.
+    gambarBillboard(cx, yBase, cz, 1.5f * scale, 4.55f * scale, arcaDuaSisiTex, 0.5f, 0.48f, 0.42f);
 }
 
 // =========================================================================
 // HELPER: ARCA GANESHA (ref 11) - LEBIH DETAIL
 // =========================================================================
 static void gambarArcaGanesha(float cx, float yBase, float cz, float scale) {
-    // Balok 3D tebal dengan tekstur Ganesha di depan & belakang, sisi samping warna batu gelap
-    gambarBalokTekstur(cx - 0.35f*scale, cx + 0.35f*scale,
-                       yBase, yBase + 1.2f*scale,
-                       cz - 0.2f*scale, cz + 0.2f*scale,
-                       arcaGaneshaTex, 0.18f, 0.18f, 0.18f);
+    // Billboard datar, selalu menghadap kamera dari sudut manapun.
+    gambarBillboard(cx, yBase, cz, 1.75f * scale, 4.2f * scale, arcaGaneshaTex, 0.18f, 0.18f, 0.18f);
 }
 
 // =========================================================================
@@ -318,6 +377,10 @@ static void gambarInteriorMuseum() {
     gambarBalok(4.43f, 4.45f, 1.0f, 2.3f, -5.5f, -4.0f, 0.1f, 0.1f, 0.1f); // Frame
     gambarPosterTekstur(4.42f, 4.44f, 1.05f, 2.25f, -5.45f, -4.05f, posterProklamasiTex, 0);
 
+    // 4. Poster Peta (Dinding belakang, di sebelah kanan poster Legenda)
+    gambarBalok(0.4f, 2.0f, 1.0f, 2.3f, -6.40f, -6.38f, 0.1f, 0.1f, 0.1f); // Frame
+    gambarPosterTekstur(0.45f, 1.95f, 1.05f, 2.25f, -6.39f, -6.37f, posterPetaTex, 2);
+
     // (Rak segitiga dihapus agar tidak tumpang tindih)
 
     // I. ARCA DUDUK DI VITRIN KIRI
@@ -334,6 +397,7 @@ static void gambarInteriorMuseum() {
     gambarVitrinKaca(-2.88f, -2.12f, 0.12f, 1.7f, -5.18f, -4.62f);
     // Rak kaca di dalam
     glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE); // Jangan tulis depth buffer -> tidak menutupi batu yang digambar setelahnya
     glColor4f(0.8f, 0.9f, 0.95f, 0.35f);
     glBegin(GL_QUADS);
     glVertex3f(-2.85f, 0.5f, -5.15f); glVertex3f(-2.15f, 0.5f, -5.15f); glVertex3f(-2.15f, 0.5f, -4.65f); glVertex3f(-2.85f, 0.5f, -4.65f);
@@ -341,8 +405,19 @@ static void gambarInteriorMuseum() {
     glVertex3f(-2.85f, 1.35f, -5.15f); glVertex3f(-2.15f, 1.35f, -5.15f); glVertex3f(-2.15f, 1.35f, -4.65f); glVertex3f(-2.85f, 1.35f, -4.65f);
     glEnd();
     glDisable(GL_BLEND);
-    // Isi vitrin dengan artefak prasasti (balok 3D bertekstur yang tebal agar terlihat)
-    gambarBalokTekstur(-2.7f, -2.3f, 0.15f, 1.55f, -5.05f, -4.75f, posterPrasastiTex, 0.5f, 0.45f, 0.4f);
+    glDepthMask(GL_TRUE); // Nyalakan lagi depth write untuk batu (opaque) berikutnya
+    // Isi vitrin dengan batu-batu kecil acak (tanpa texture), tersebar di lantai + 3 rak
+    // Lantai dasar (y = 0.15)
+    gambarBalok(-2.79f, -2.51f, 0.15f, 0.31f, -5.05f, -4.85f, 0.55f, 0.52f, 0.47f);
+    gambarBalok(-2.46f, -2.24f, 0.15f, 0.27f, -5.09f, -4.91f, 0.48f, 0.46f, 0.42f);
+    // Rak 1 (y = 0.5)
+    gambarBalok(-2.82f, -2.58f, 0.50f, 0.64f, -4.95f, -4.75f, 0.50f, 0.47f, 0.43f);
+    gambarBalok(-2.40f, -2.20f, 0.50f, 0.70f, -5.04f, -4.86f, 0.58f, 0.55f, 0.50f);
+    // Rak 2 (y = 0.95)
+    gambarBalok(-2.68f, -2.42f, 0.95f, 1.10f, -5.01f, -4.79f, 0.52f, 0.49f, 0.44f);
+    gambarBalok(-2.34f, -2.16f, 0.95f, 1.06f, -4.83f, -4.67f, 0.46f, 0.44f, 0.40f);
+    // Rak 3 (y = 1.35)
+    gambarBalok(-2.56f, -2.34f, 1.35f, 1.48f, -5.045f, -4.855f, 0.50f, 0.48f, 0.43f);
 
     // --- J2. Arca Dua Sisi (ref 10) ---
     gambarBalok(0.3f, 1.3f, 0.05f, 0.08f, -4.8f, -4.0f, 0.85f, 0.88f, 0.9f); // alas kaca
@@ -374,11 +449,11 @@ static void gambarInteriorMuseum() {
     gambarBalok(-4.47f, -4.46f, 1.0f, 1.7f, -5.55f, -5.1f, 0.2f, 0.2f, 0.2f);
     gambarBalok(-3.8f, -3.2f, 1.4f, 2.0f, -6.43f, -6.42f, 0.15f, 0.15f, 0.15f);
 
-    // --- K2. Kiosk Multimedia: MEPET DINDING KANAN (X=4.45), dekat pintu ---
-    gambarBalok(4.15f, 4.45f, 0.05f, 2.0f, -3.2f, -2.7f, 0.05f, 0.2f, 0.5f); // Kiosk body
-    gambarBalok(4.17f, 4.43f, 1.1f, 1.75f, -2.69f, -2.68f, 0.8f, 0.82f, 0.85f); // Layar
-    gambarBalok(4.20f, 4.40f, 0.85f, 1.0f, -2.69f, -2.68f, 0.85f, 0.75f, 0.2f); // Keyboard pad
-    gambarBalok(4.25f, 4.35f, 0.3f, 0.6f, -2.69f, -2.68f, 0.2f, 0.6f, 0.9f); // Speaker/detail
+    // // --- K2. Kiosk Multimedia: MEPET DINDING KANAN (X=4.45), dekat pintu ---
+    // gambarBalok(4.15f, 4.45f, 0.05f, 2.0f, -3.2f, -2.7f, 0.05f, 0.2f, 0.5f); // Kiosk body
+    // gambarBalok(4.17f, 4.43f, 1.1f, 1.75f, -2.69f, -2.68f, 0.8f, 0.82f, 0.85f); // Layar
+    // gambarBalok(4.20f, 4.40f, 0.85f, 1.0f, -2.69f, -2.68f, 0.85f, 0.75f, 0.2f); // Keyboard pad
+    // gambarBalok(4.25f, 4.35f, 0.3f, 0.6f, -2.69f, -2.68f, 0.2f, 0.6f, 0.9f); // Speaker/detail
 
     // L. PLAFON / LANGIT-LANGIT PUTIH
     gambarBalok(-4.5f, 4.5f, 2.45f, 2.5f, -6.5f, -2.5f, 0.95f, 0.95f, 0.95f);
