@@ -501,14 +501,14 @@ int main() {
 
         // Pohon + bunga di sisi kanan RumahPutih (sisi rumput, bukan sisi paving)
         // Atap menjorok sampai X=21.55, jadi ditaruh sedikit di luar itu, tetap dekat dinding
-        glPushMatrix();
-            glTranslatef(23.0f, 0.0f, 14.0f);
-            drawObjekPohon(); //INI POHON SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
-        glPopMatrix();
-        glPushMatrix();
-            glTranslatef(24.0f, 0.0f, 14.0f);
-            drawPohonMungil(); //INI BUNGA SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
-        glPopMatrix();
+        // glPushMatrix();
+        //     glTranslatef(23.0f, 0.0f, 14.0f);
+        //     drawObjekPohon(); //INI POHON SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
+        // glPopMatrix();
+        // glPushMatrix();
+        //     glTranslatef(24.0f, 0.0f, 14.0f);
+        //     drawPohonMungil(); //INI BUNGA SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
+        // glPopMatrix();
 
 
          glPushMatrix();
