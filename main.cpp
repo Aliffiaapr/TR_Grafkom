@@ -397,8 +397,22 @@ int main() {
 
         // LOKASI 2: Dekat Rumah Putih - batu hitam
         glPushMatrix();
-            glTranslatef(5.0f, 1.0f, -2.5f); // X digeser kanan, Z disesuaikan agar mundur mendekati rumah putih
+            glTranslatef(3.0f, 1.0f, -1.0f); // X digeser kanan, Z disesuaikan agar mundur mendekati rumah putih
             glScalef(2.5f, 2.5f, 2.5f);
+            gambarBatuHitam();
+        glPopMatrix();
+
+        //Duplikat batu hitam dekat bangku
+        glPushMatrix();
+            glTranslatef(3.0f, 1.0f, 15.0f); //x minus kr n pindah ke kiri
+            glScalef(2.5f, 2.5f, 2.5f); // Ukuran disamakan dengan yang asli
+            gambarBatuHitam();
+        glPopMatrix();
+
+        //Duplikat batu hitam depan rumah oren
+        glPushMatrix();
+            glTranslatef(3.0f, 1.0f, -23.0f); //x supaya posisi sebelah kanan memept jalan
+            glScalef(2.5f, 2.5f, 2.5f); 
             gambarBatuHitam();
         glPopMatrix();
 

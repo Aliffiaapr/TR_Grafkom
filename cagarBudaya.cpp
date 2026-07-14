@@ -169,19 +169,13 @@ void gambarBatuRatna() {
     glPushMatrix();
         // 1. Atur koordinat posisi utama objek cagar budaya di peta
         glTranslatef(0.0f, -0.5f, 2.6f); 
-
-        // glColor4f(0.35f, 0.35f, 0.35f, 1.0f); // Warna abu-abu semen/batu polos
-
-        // // Membuat balok alas tipis di atas tanah (Lebar: 0.8, Tinggi: 0.15, Tebal: 0.8)
-        // gambarBalokBertekstur(-0.4f, 0.4f, 0.0f, 0.15f, -0.4f, 0.4f);
-        // glDisable(GL_TEXTURE_2D);
-
+        
         // -----------------------------------------------------------------
         // BAGIAN B: BADAN ARCA RATNA (2D Billboard - Selalu Ikut Kamera seperti Ganesha)
         // -----------------------------------------------------------------
         glPushMatrix();
             // Naikkan posisi arca setinggi 0.15f agar berdiri pas di atas tatakan balok tadi
-            glTranslatef(0.0f, 0.15f, 0.0f);
+            glTranslatef(0.0f, 0.1f, 0.0f);
             
             // Panggil fungsi billboard sumbu Y agar gambar selalu menghadap ke kamera
             terapkanBillboardY();
@@ -200,10 +194,10 @@ void gambarBatuRatna() {
             // Menggambar plat bidang datar tempat menempelnya gambar PNG transparan
             // Ukuran bisa disesuaikan (Lebar: 0.7, Tinggi: 0.8)
             glBegin(GL_QUADS);
-                glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.2f, 0.00f, 0.0f); // Kiri bawah
-                glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.80f, 0.00f, 0.0f); // Kanan bawah
-                glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.80f, 1.30f, 0.0f); // Kanan atas
-                glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.3f, 1.30f, 0.0f); // Kiri atas
+                glTexCoord2f(0.0f, 0.0f); glVertex3f(-2.2f, 0.00f, 0.0f); // Kiri bawah
+                glTexCoord2f(1.0f, 0.0f); glVertex3f( 2.2f, 0.00f, 0.0f); // Kanan bawah
+                glTexCoord2f(1.0f, 1.0f); glVertex3f( 2.2f, 2.60f, 0.0f); // Kanan atas
+                glTexCoord2f(0.0f, 1.0f); glVertex3f(-2.2f, 2.60f, 0.0f); // Kiri atas
             glEnd();
 
             glDisable(GL_ALPHA_TEST);
