@@ -72,7 +72,7 @@ static void gambarRumpunTanaman(float cx, float cy, float cz, float skala) {
 // =========================================================================
 void gambarTanamanHalaman() {
     // Di samping Batu Ratna (kombinasi hijau-merah, ukuran besar)
-    gambarRumpunTanaman(9.8f, 0.0f, -12.5f, 3.0f);
+    gambarRumpunTanaman(9.8f, 0.0f, -12.5f, 5.0f);
     gambarRumpunTanaman(5.0f, 0.0f, -13.8f, 2.7f);
 
     // Di samping gedung museum (sisi kiri & kanan bangunan, di luar zona paving)
