@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <cmath>
 #include "objekGanesha.h" // Tambahkan ini agar main.cpp kenal file Ganesha-mu
 #include "objekPohon.h"
 #include "objekBunga.h"
@@ -73,6 +74,40 @@ float basisNengok = 65.0f;  // Kecepatan putar badan/rotasi nyaman (65 derajat p
 // Variabel pengontrol waktu untuk mengunci FPS agar pergerakan tidak melompat gasing
 float deltaTime = 0.0f;	// Waktu jeda antar frame terakhir
 float lastFrame = 0.0f;	// Waktu perekaman frame sebelumnya
+
+// Fungsi untuk menggambar langit gradasi (Biru Tua ke Biru Muda)
+void drawGradationSky() {
+    glDisable(GL_LIGHTING); // Matikan pencahayaan jika ada agar warna gradasi murni
+    glDisable(GL_DEPTH_TEST); // Matikan depth test sementara agar langit selalu digambar paling belakang
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Gunakan proyeksi 2D orthographic sejajar layar
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glBegin(GL_QUADS);
+        // Sisi Bawah (Warna Biru Langit Cerah / Ufuk)
+        glColor3f(0.6f, 0.85f, 0.95f);
+        glVertex2f(-1.0f, -1.0f);
+        glVertex2f( 1.0f, -1.0f);
+
+        // Sisi Atas (Warna Biru Tua / Langit Atas)
+        glColor3f(0.15f, 0.45f, 0.75f);
+        glVertex2f( 1.0f,  1.0f);
+        glVertex2f(-1.0f,  1.0f);
+    glEnd();
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+
+    glEnable(GL_DEPTH_TEST); // Aktifkan kembali depth test untuk objek 3D
+}
 
 // =========================================================================
 // FUNGSI PEMBANTU MENGGAMBAR KUBUS CUSTOM (PENGGANTI GLUT)
@@ -343,6 +378,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
 
+        // =================================================================
+        // GAMBAR LANGIT GRADASI TERLEBIH DAHULU (Paling Belakang)
+        // =================================================================
+        drawGradationSky();
+
         // -----------------------------------------------------------------
         // KONFIGURASI PROYEKSI LENSA KAMERA PERSPEKTIF
         // -----------------------------------------------------------------
@@ -446,9 +486,9 @@ int main() {
             glTranslatef(-11.0f, 0.0f, 16.0f);
             drawObjekPohon(); //INI OBJEK POHON SAMPING GANESHA
         glPopMatrix();
-        glPushMatrix();
-            glTranslatef(-17.0f, 0.0f, 19.0f);
-            drawObjekPohon(); //INI OBJEK POHON SAMPING GANESHA
+         glPushMatrix();
+            glTranslatef(-10.0f, 0.0f, 15.0f);
+            drawPohonMungil(); //INI OBJEK BUNGAAAA
         glPopMatrix();
 
         glPushMatrix();
@@ -456,24 +496,14 @@ int main() {
             drawPohonMungil(); //INI OBJEK BUNGAAAA
         glPopMatrix();
         glPushMatrix();
+            glTranslatef(-15.0f, 0.0f, 16.0f);
+            drawPohonMungil(); //INI OBJEK BUNGAAAA
+        glPopMatrix();
+        glPushMatrix();
             glTranslatef(-11.0f, 0.0f, 18.0f);
             objekSemak(); //INI OBJEK SEMAK
         glPopMatrix();
-
-
-        // 4. Plotting Kotak-Kotak Kecil di Sisi Taman Sebelah Kanan Jalan
-        glPushMatrix();
-            glTranslatef(8.0f, 0.0f, 15.0f); // Taman kanan-atas
-            //kosong
-        glPopMatrix();
-
-        glPushMatrix();
-            glTranslatef(22.0f, 1.5f, 12.0f); // Taman kanan-pojok
-            drawPohonTaman(2.0f, 0.0f, 12.0f, 1.2f); // INI OBEJK POHON BESAR
-        glPopMatrix();
-
-
-
+        
         // ==========================================
         // STRUKTUR RUMAH PUTIH (DIPERBESAR & PROPORSIONAL)
         // ==========================================
