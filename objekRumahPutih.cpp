@@ -11,8 +11,13 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+//batu
 static GLuint batuTex = 0;
 static bool isBatuTextureLoaded = false;
+
+//tulisan
+static GLuint marmerTex = 0;
+static bool isMarmerTextureLoaded = false;
 
 void loadBatuTexture() {
     if (isBatuTextureLoaded) return; // Mencegah load berulang-ulang tiap frame
@@ -38,6 +43,35 @@ void loadBatuTexture() {
         
         stbi_image_free(data);
         isBatuTextureLoaded = true;
+
+        glDisable(GL_TEXTURE_2D);
+    }
+}
+
+void loadMarmerTextureLoaded() {
+    if (isMarmerTextureLoaded) return; // Mencegah load berulang-ulang tiap frame
+
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); 
+    
+    // Membaca file gambar batu hasil crop kamu (pastikan namanya sesuai, misal "batu.png")
+    unsigned char *data = stbi_load("marmer.png", &width, &height, &nrChannels, 4);
+
+    if (data) {
+        glGenTextures(1, &marmerTex);
+        glBindTexture(GL_TEXTURE_2D, marmerTex);
+
+        // Parameter tekstur standar agar gambar terulang dengan rapi
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        // Upload gambar ke memori OpenGL
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        
+        stbi_image_free(data);
+        isMarmerTextureLoaded = true;
 
         glDisable(GL_TEXTURE_2D);
     }
@@ -116,9 +150,59 @@ void drawPrasastiPlumpungan(float rx, float ry, float rz, int laci, int cincin) 
     }
 }
 
+void drawPapanMarmer() {
+    // --------------------------------------------------------
+    // A. SISI DEPAN (Ditempeli Gambar Tekstur Marmer Tulisan Emas)
+    // --------------------------------------------------------
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, marmerTex);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Warna netral (putih) agar warna asli gambar marmer keluar sempurna
+
+    glBegin(GL_TRIANGLES);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        // Segitiga 1
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f,  0.5f);
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.5f, -0.5f,  0.5f);
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.5f,  0.5f,  0.5f);
+        // Segitiga 2
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.5f,  0.5f,  0.5f);
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.5f,  0.5f,  0.5f);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.5f, -0.5f,  0.5f);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    // --------------------------------------------------------
+    // B. SISI LAINNYA (Polos Abu-Abu Sangat Gelap / Hitam)
+    // --------------------------------------------------------
+    glColor4f(0.08f, 0.08f, 0.08f, 1.0f);
+    glBegin(GL_TRIANGLES);
+        // Belakang
+        glNormal3f(0.0f, 0.0f, -1.0f);
+        glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f( 0.5f,  0.5f, -0.5f);
+        glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f(-0.5f, -0.5f, -0.5f);
+        // Atas
+        glNormal3f(0.0f, 1.0f, 0.0f);
+        glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f(-0.5f,  0.5f,  0.5f); glVertex3f( 0.5f,  0.5f,  0.5f);
+        glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f(-0.5f,  0.5f, -0.5f);
+        // Bawah
+        glNormal3f(0.0f, -1.0f, 0.0f);
+        glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f( 0.5f, -0.5f,  0.5f);
+        glVertex3f( 0.5f, -0.5f,  0.5f); glVertex3f(-0.5f, -0.5f,  0.5f); glVertex3f(-0.5f, -0.5f, -0.5f);
+        // Kanan
+        glNormal3f(1.0f, 0.0f, 0.0f);
+        glVertex3f( 0.5f, -0.5f, -0.5f); glVertex3f( 0.5f,  0.5f, -0.5f); glVertex3f( 0.5f,  0.5f,  0.5f);
+        glVertex3f( 0.5f,  0.5f,  0.5f); glVertex3f( 0.5f, -0.5f,  0.5f); glVertex3f( 0.5f, -0.5f, -0.5f);
+        // Kiri
+        glNormal3f(-1.0f, 0.0f, 0.0f);
+        glVertex3f(-0.5f, -0.5f, -0.5f); glVertex3f(-0.5f, -0.5f,  0.5f); glVertex3f(-0.5f,  0.5f,  0.5f);
+        glVertex3f(-0.5f,  0.5f,  0.5f); glVertex3f(-0.5f,  0.5f, -0.5f); glVertex3f(-0.5f, -0.5f, -0.5f);
+    glEnd();
+}
+
 void drawRumahPutih() {
     glDisable(GL_TEXTURE_2D);
     loadBatuTexture();
+    loadMarmerTextureLoaded();
     glPushMatrix();
 
     // ==========================================
@@ -244,8 +328,15 @@ void drawRumahPutih() {
         glPushMatrix(); { glTranslatef(0.0f, 3.3f, 0.0f); glScalef(5.2f, 0.2f, 5.2f); drawBalokRumah(1.0f, 1.0f, 1.0f, 1.0f); } glPopMatrix();
     } glPopMatrix();
 
+     // 5. PAPAN MARMER UNTUK TULISAN
+    glPushMatrix();
+        glTranslatef(0.0f, 1.6f, -2.35f); //x=tepat ditengah; y= tinggi ditengah dinding kaca; z=digeser dkt kaca blkg
+        glScalef(1.2f, 2.2f, 0.04f); //x=lebar; y=tinggi; z=tebal
+        drawPapanMarmer();
+    glPopMatrix();
+
     // ==========================================
-    // 5. DINDING KACA & PINTU (Transparan)
+    // 6. DINDING KACA & PINTU (Transparan)
     // ==========================================
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -269,6 +360,8 @@ void drawRumahPutih() {
 
     glPopMatrix();
 }
+
+
 
 void drawAtapRumahPutih() {
     glDisable(GL_TEXTURE_2D);
