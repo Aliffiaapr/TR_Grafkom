@@ -16,6 +16,7 @@
 #include "gedungMuseum.h"
 #include "balok.h"
 #include "objekBangkuMeja.h"
+#include "halaman.h"
 
 // =========================================================================
 // VARIABLE KONTROL KAMERA (SKALA NORMAL, STABIL & HALUS)
@@ -364,6 +365,7 @@ int main() {
         // -----------------------------------------------------------------
         drawGround();
         drawRoad();
+        gambarTanamanHalaman(); // TANAMAN HIAS DI HALAMAN
 
         // 1. Plotting Gedung Besar Atas (Ditaruh di kanan X=10, mundur Z=-32)
         // Nilai Y=5.0f diatur pas agar dasarnya tepat menempel di permukaan tanah (10/2)
@@ -497,6 +499,17 @@ int main() {
             drawObjekPohon(); //INI OBJEK POHON SAMPING RUMHA PUTIH
         glPopMatrix();
 
+        // Pohon + bunga di sisi kanan RumahPutih (sisi rumput, bukan sisi paving)
+        // Atap menjorok sampai X=21.55, jadi ditaruh sedikit di luar itu, tetap dekat dinding
+        glPushMatrix();
+            glTranslatef(23.0f, 0.0f, 14.0f);
+            drawObjekPohon(); //INI POHON SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(24.0f, 0.0f, 14.0f);
+            drawPohonMungil(); //INI BUNGA SAMPING KANAN RUMAH PUTIH (SISI RUMPUT)
+        glPopMatrix();
+
 
          glPushMatrix();
             glTranslatef(11.0f, 0.0f, 14.0f);
@@ -514,6 +527,46 @@ int main() {
         glPushMatrix();
             glTranslatef(10.0f, 0.0f, 22.0f);
             objekSemak(); //INI OBJEK semak KANAN
+        glPopMatrix();
+
+        // Semak yang sama di sisi KIRI (melanjutkan barisan ke arah X lebih besar)
+        glPushMatrix();
+            glTranslatef(20.0f, 0.0f, 7.0f);
+            glRotatef(180.0f, 0.0f, 1.0f, 0.0f); // Dibalik 180 derajat agar bunga menghadap kiri
+            objekSemak(); //INI OBJEK SEMAK KIRI
+        glPopMatrix();
+
+         glPushMatrix();
+            glTranslatef(15.0f, 0.0f, 7.0f);
+            glRotatef(180.0f, 0.0f, 1.0f, 0.0f); // Dibalik 180 derajat agar bunga menghadap kiri
+            objekSemak(); //INI OBJEK SEMAK KIRI
+        glPopMatrix();
+
+         glPushMatrix();
+            glTranslatef(10.0f, 0.0f, 7.0f);
+            glRotatef(180.0f, 0.0f, 1.0f, 0.0f); // Dibalik 180 derajat agar bunga menghadap kiri
+            objekSemak(); //INI OBJEK SEMAK KIRI
+        glPopMatrix();
+
+        // Pohon + bunga beberapa langkah di sebelah semak kiri
+        glPushMatrix();
+            glTranslatef(23.0f, 0.0f, -15.0f);
+            drawObjekPohon(); //INI POHON DI SEBELAH SEMAK KIRI
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(25.0f, 0.0f, 7.0f);
+            drawPohonMungil(); //INI BUNGA DI SEBELAH SEMAK KIRI
+        glPopMatrix();
+
+        // Pohon kamboja/frangipani, di samping pohon (20,0,1) di atas
+        glPushMatrix();
+            glTranslatef(17.5f, 0.0f, 2.0f);
+            gambarPohonKamboja(0.0f, 0.0f, 0.0f, 4.0f); //INI POHON KAMBOJA SAMPING POHON (20,0,1)
+        glPopMatrix();
+
+         glPushMatrix();
+            glTranslatef(10.5f, 0.0f, 0.0f);
+            gambarPohonKamboja(0.0f, 0.0f, 0.0f, 3.0f); //INI POHON KAMBOJA SAMPING POHON (20,0,1)
         glPopMatrix();
 
 
@@ -536,6 +589,11 @@ int main() {
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             drawPagarSegment(50.0f); // Sesuaikan panjangnya mundur ke belakang (misal 40 unit)
         glPopMatrix();
+
+        // Semak rimbun menyusuri pagar kanan (X=23, sepanjang Z -25 s/d 24)
+        glPushMatrix();
+            gambarSemakPagar(23.0f, -17.0f, 24.0f, 12);
+        glPopMatrix();          
 
         // =================================================================
         // PAGAR SAMPING KANAN (Menutup Area Rumah Baru ke Belakang)
