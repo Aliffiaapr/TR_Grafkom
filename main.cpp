@@ -3,6 +3,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <cmath>
 #include "objekGanesha.h" // Tambahkan ini agar main.cpp kenal file Ganesha-mu
 #include "objekPohon.h"
 #include "objekBunga.h"
@@ -16,6 +17,7 @@
 #include "gedungMuseum.h"
 #include "balok.h"
 #include "objekBangkuMeja.h"
+
 
 // =========================================================================
 // VARIABLE KONTROL KAMERA (SKALA NORMAL, STABIL & HALUS)
@@ -72,6 +74,43 @@ float basisNengok = 65.0f;  // Kecepatan putar badan/rotasi nyaman (65 derajat p
 // Variabel pengontrol waktu untuk mengunci FPS agar pergerakan tidak melompat gasing
 float deltaTime = 0.0f;	// Waktu jeda antar frame terakhir
 float lastFrame = 0.0f;	// Waktu perekaman frame sebelumnya
+
+
+// Fungsi untuk menggambar langit gradasi (Biru Tua ke Biru Muda)
+void drawGradationSky() {
+    glDisable(GL_LIGHTING); // Matikan pencahayaan jika ada agar warna gradasi murni
+    glDisable(GL_DEPTH_TEST); // Matikan depth test sementara agar langit selalu digambar paling belakang
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0); // Gunakan proyeksi 2D orthographic sejajar layar
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    glBegin(GL_QUADS);
+        // Sisi Bawah (Warna Biru Langit Cerah / Ufuk)
+        glColor3f(0.6f, 0.85f, 0.95f);
+        glVertex2f(-1.0f, -1.0f);
+        glVertex2f( 1.0f, -1.0f);
+
+        // Sisi Atas (Warna Biru Tua / Langit Atas)
+        glColor3f(0.15f, 0.45f, 0.75f);
+        glVertex2f( 1.0f,  1.0f);
+        glVertex2f(-1.0f,  1.0f);
+    glEnd();
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+
+    glEnable(GL_DEPTH_TEST); // Aktifkan kembali depth test untuk objek 3D
+}
+
+
 
 // =========================================================================
 // FUNGSI PEMBANTU MENGGAMBAR KUBUS CUSTOM (PENGGANTI GLUT)
@@ -298,13 +337,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 // INTIPROGRAM UTAMA DAN RENDER ENGINE LOOP
 // =========================================================================
 
-int main() { 
+int main() {
     if (!glfwInit()) return -1;
 
     GLFWwindow* window = glfwCreateWindow(960, 540, "Proyek 3D GLFW - Kalibrasi Sukses", NULL, NULL);
     if (!window) {
         glfwTerminate();
-        return -1;  
+        return -1;
     }
     glfwMakeContextCurrent(window);
 
@@ -342,6 +381,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glLoadIdentity();
 
+        // =================================================================
+        // 1. GAMBAR LANGIT GRADASI TERLEBIH DAHULU (Paling Belakang)
+        // =================================================================
+        drawGradationSky();
+
         // -----------------------------------------------------------------
         // KONFIGURASI PROYEKSI LENSA KAMERA PERSPEKTIF
         // -----------------------------------------------------------------
@@ -360,10 +404,11 @@ int main() {
         glLoadMatrixf(glm::value_ptr(view));
 
         // -----------------------------------------------------------------
-        // PROSES DRAWING & PLOTTING STRUKTUR DUNIA SESUAI KOORDINAT DENAH
+        // PROSES DRAWING & PLOTTING STRUKTUR DUNIA
         // -----------------------------------------------------------------
         drawGround();
         drawRoad();
+
 
         // 1. Plotting Gedung Besar Atas (Ditaruh di kanan X=10, mundur Z=-32)
         // Nilai Y=5.0f diatur pas agar dasarnya tepat menempel di permukaan tanah (10/2)
@@ -412,7 +457,7 @@ int main() {
         //Duplikat batu hitam depan rumah oren
         glPushMatrix();
             glTranslatef(3.0f, 1.0f, -23.0f); //x supaya posisi sebelah kanan memept jalan
-            glScalef(2.5f, 2.5f, 2.5f); 
+            glScalef(2.5f, 2.5f, 2.5f);
             gambarBatuHitam();
         glPopMatrix();
 
@@ -448,9 +493,17 @@ int main() {
             glTranslatef(-17.0f, 0.0f, 19.0f);
             drawObjekPohon(); //INI OBJEK POHON SAMPING GANESHA
         glPopMatrix();
+        glPushMatrix();
+            glTranslatef(-10.0f, 0.0f, 15.0f);
+            drawPohonMungil(); //INI OBJEK BUNGAAAA
+        glPopMatrix();
 
         glPushMatrix();
             glTranslatef(-9.0f, 0.0f, 16.0f);
+            drawPohonMungil(); //INI OBJEK BUNGAAAA
+        glPopMatrix();
+        glPushMatrix();
+            glTranslatef(-15.0f, 0.0f, 16.0f);
             drawPohonMungil(); //INI OBJEK BUNGAAAA
         glPopMatrix();
         glPushMatrix();
@@ -463,11 +516,6 @@ int main() {
         glPushMatrix();
             glTranslatef(8.0f, 0.0f, 15.0f); // Taman kanan-atas
             //kosong
-        glPopMatrix();
-
-        glPushMatrix();
-            glTranslatef(22.0f, 1.5f, 12.0f); // Taman kanan-pojok
-            drawPohonTaman(2.0f, 0.0f, 12.0f, 1.2f); // INI OBEJK POHON BESAR
         glPopMatrix();
 
 
